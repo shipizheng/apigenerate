@@ -70,7 +70,7 @@ func main() {
 
 	currentPath := getCurrPath()
 	currentPath = getParentDirectory(currentPath)
-	tmplPath := filepath.Join(currentPath, "src", "apigenerate", "model.tpl")
+	tmplPath := filepath.Join(currentPath, "src", "github.com/shipizheng/apigenerate", "model.tpl")
 
 	funcMap := template.FuncMap{
 		"toLower": func(content string) string {
