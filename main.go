@@ -56,7 +56,7 @@ func main() {
 	flag.Parse()
 	modleName := *name
 	if modleName == "" {
-		fmt.Println("models not empty1")
+		fmt.Println("models not empty")
 		os.Exit(1)
 	}
 	projectName := *pName
