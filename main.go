@@ -77,9 +77,9 @@ func main() {
 	model.Fileds = []Field{f1}
 
 	currentPath := getCurrPath()
-	fmt.Println("1:" + currentPath)
+	// fmt.Println("1:" + currentPath)
 	currentPath = getParentDirectory(currentPath)
-	fmt.Println("2:" + currentPath)
+	// fmt.Println("2:" + currentPath)
 	tmplPath := filepath.Join(currentPath, "src", "github.com/shipizheng/apigenerate", "model.tpl")
 
 	funcMap := template.FuncMap{
