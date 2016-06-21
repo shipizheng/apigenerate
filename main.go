@@ -77,7 +77,9 @@ func main() {
 	model.Fileds = []Field{f1}
 
 	currentPath := getCurrPath()
+	fmt.Println("1:" + currentPath)
 	currentPath = getParentDirectory(currentPath)
+	fmt.Println("2:" + currentPath)
 	tmplPath := filepath.Join(currentPath, "src", "github.com/shipizheng/apigenerate", "model.tpl")
 
 	funcMap := template.FuncMap{
@@ -120,5 +122,5 @@ func subStr(s string, pos, length int) string {
 }
 
 func getParentDirectory(dirctory string) string {
-	return subStr(dirctory, 0, strings.LastIndex(dirctory, "/"))
+	return subStr(dirctory, 0, strings.LastIndex(dirctory, string(os.PathSeparator)))
 }
