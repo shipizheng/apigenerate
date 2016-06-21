@@ -4,7 +4,7 @@ package {{.PkgName}}
 import (
 	"gopkg.in/mgo.v2"
 	"gopkg.in/mgo.v2/bson"
-	"wxBackend/services"
+	"{{.ProjectName}}/services"
 )
 
 type {{ .Name }} struct {

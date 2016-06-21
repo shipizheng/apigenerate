@@ -33,11 +33,12 @@ type Method struct {
 
 //模型
 type Modle struct {
-	Name       string   `json:"name"`
-	PkgName    string   `json:"pkgName"`
-	Fileds     []Field  `json:"fields"`
-	Methods    []Method `json:"methods"`
-	Annotation string   `json:"annotation,omitempty"`
+	Name        string   `json:"name"`
+	PkgName     string   `json:"pkgName"`
+	ProjectName string   `json:"ProjectName"`
+	Fileds      []Field  `json:"fields"`
+	Methods     []Method `json:"methods"`
+	Annotation  string   `json:"annotation,omitempty"`
 }
 
 // ToUpper 大写
@@ -50,11 +51,17 @@ func main() {
 	// apigenerate -n "mc" [dir]
 
 	name := flag.String("n", "", "models名字")
+	pName := flag.String("p", "", "project/package名字")
 	outPath := flag.String("d", ".", "输出路径")
 	flag.Parse()
 	modleName := *name
 	if modleName == "" {
 		fmt.Println("models not empty1")
+		os.Exit(1)
+	}
+	projectName := *pName
+	if projectName == "" {
+		fmt.Println("projectName not empty")
 		os.Exit(1)
 	}
 	out := *outPath
@@ -65,6 +72,7 @@ func main() {
 	fmt.Printf("name:%s\noutpath:%s\n", modleName, out)
 	var model Modle
 	model.Name = modleName
+	model.ProjectName = projectName
 	model.PkgName = "models"
 	model.Fileds = []Field{f1}
 
