@@ -1,14 +1,14 @@
-package services
+package dao
 {{$name:= .Name | toLower }}
 const (
 	{{$name}}ColletinName string = "{{$name -}}"
 )
 
-type {{.Name}}Service struct {
-	*Service
+type {{.Name}}Dao struct {
+	*Dao
 }
 
-func (svc *{{.Name}}Service) Add(object models.{{.Name}}) (*models.{{.Name}}, error) {
+func (d *{{.Name}}Dao) Add(object models.{{.Name}}) (*models.{{.Name}}, error) {
 	currentTime := time.Now()
 	object.Created = &currentTime
 	result, err := govalidator.ValidateStruct(&object)
@@ -20,7 +20,7 @@ func (svc *{{.Name}}Service) Add(object models.{{.Name}}) (*models.{{.Name}}, er
 	dbOpt := func(col *mgo.Collection) error {
 		return col.Insert(&object)
 	}
-	err = svc.Service.DBAction(DBName, {{$name}}ColletinName, dbOpt)
+	err = d.Dao.DBAction(DBName, {{$name}}ColletinName, dbOpt)
 
 	if err != nil {
 		return nil, errs.NewError(500, err.Error())
@@ -28,11 +28,11 @@ func (svc *{{.Name}}Service) Add(object models.{{.Name}}) (*models.{{.Name}}, er
 	return &object, nil
 }
 
-func (svc *{{.Name}}Service) BulkAdd(objects []interface{}) (interface{}, error) {
+func (d *{{.Name}}Dao) BulkAdd(objects []interface{}) (interface{}, error) {
 	dbOpt := func(col *mgo.Collection) error {
 		return col.Insert(objects...)
 	}
-	err := svc.Service.DBAction(DBName, {{$name}}ColletinName, dbOpt)
+	err := d.Dao.DBAction(DBName, {{$name}}ColletinName, dbOpt)
 
 	if err != nil {
 		return nil, errs.NewError(500, err.Error())
@@ -40,12 +40,13 @@ func (svc *{{.Name}}Service) BulkAdd(objects []interface{}) (interface{}, error)
 	return objects, nil
 }
 
-func (svc *{{.Name}}Service) Update(findOpt, updateOpt bson.M) error {
-
+func (d *{{.Name}}Dao) Update(findOpt, updateOpt bson.M) error {
+	currentTime := time.Now()
+	updateOpt["updated"] = &currentTime
 	dbOpt := func(col *mgo.Collection) error {
 		return col.Update(findOpt, updateOpt)
 	}
-	err := svc.Service.DBAction(DBName, {{$name}}ColletinName, dbOpt)
+	err := d.Dao.DBAction(DBName, {{$name}}ColletinName, dbOpt)
 
 	if err != nil {
 		return errs.NewError(500, err.Error())
@@ -53,9 +54,11 @@ func (svc *{{.Name}}Service) Update(findOpt, updateOpt bson.M) error {
 	return nil
 }
 
-func (svc *{{.Name}}Service) ApplayUpdate(findOpt, updateOpt bson.M,upsert bool, isReturn bool) (*models.{{.Name}},*mgo.ChangeInfo, error) {
+func (d *{{.Name}}Dao) ApplayUpdate(findOpt, updateOpt bson.M,upsert bool, isReturn bool) (*models.{{.Name}},*mgo.ChangeInfo, error) {
 	var newResult models.{{.Name}}
 	var changeInfo *mgo.ChangeInfo
+	currentTime := time.Now()
+	updateOpt["updated"] = &currentTime
 	dbOpt := func(col *mgo.Collection) error {
 		change := mgo.Change{
 			Update:    updateOpt,
@@ -66,7 +69,7 @@ func (svc *{{.Name}}Service) ApplayUpdate(findOpt, updateOpt bson.M,upsert bool,
 		changeInfo = i
 		return err
 	}
-	err := svc.Service.DBAction(DBName, {{$name}}ColletinName, dbOpt)
+	err := d.Dao.DBAction(DBName, {{$name}}ColletinName, dbOpt)
 
 	if err != nil {
 		return nil, changeInfo,errs.NewError(500, err.Error())
@@ -74,7 +77,7 @@ func (svc *{{.Name}}Service) ApplayUpdate(findOpt, updateOpt bson.M,upsert bool,
 	return &newResult, changeInfo,nil
 }
 
-func (svc *{{.Name}}Service) Finds(findOpt bson.M, selectOpt bson.M, ss ...string) ([]models.{{.Name}}, error) {
+func (d *{{.Name}}Dao) Finds(findOpt bson.M, selectOpt bson.M, ss ...string) ([]models.{{.Name}}, error) {
 	var objects []models.{{.Name}}
 	dbOpt := func(col *mgo.Collection) error {
 		if len(ss) > 0 {
@@ -82,28 +85,28 @@ func (svc *{{.Name}}Service) Finds(findOpt bson.M, selectOpt bson.M, ss ...strin
 		}
 		return col.Find(findOpt).Select(selectOpt).All(&objects)
 	}
-	err := svc.Service.DBAction(DBName, {{$name}}ColletinName, dbOpt)
+	err := d.Dao.DBAction(DBName, {{$name}}ColletinName, dbOpt)
 	if err != nil {
 		return nil, errs.NewError(500, err.Error())
 	}
 	return objects, nil
 }
 
-func (svc *{{.Name}}Service) Count(findOpt bson.M) (int, error) {
+func (d *{{.Name}}Dao) Count(findOpt bson.M) (int, error) {
 	var count int
 	dbOpt := func(col *mgo.Collection) error {
 		c, err := col.Find(findOpt).Count()
 		count = c
 		return err
 	}
-	err := svc.Service.DBAction(DBName, {{$name}}ColletinName, dbOpt)
+	err := d.Dao.DBAction(DBName, {{$name}}ColletinName, dbOpt)
 	if err != nil {
 		return count, errs.NewError(500, err.Error())
 	}
 	return count, nil
 }
 
-func (svc *{{.Name}}Service) FindLimit(findOpt bson.M, selectOpt bson.M, start, count int, ss ...string) (*models.List{{.Name}}, error) {
+func (d *{{.Name}}Dao) FindLimit(findOpt bson.M, selectOpt bson.M, start, count int, ss ...string) (*models.List{{.Name}}, error) {
 	var objects []models.{{.Name}}
 	var totalCount int
 	dbOpt := func(col *mgo.Collection) error {
@@ -114,7 +117,7 @@ func (svc *{{.Name}}Service) FindLimit(findOpt bson.M, selectOpt bson.M, start, 
 		}
 		return col.Find(findOpt).Select(selectOpt).Skip(start).Limit(count).All(&objects)
 	}
-	err := svc.Service.DBAction(DBName, {{$name}}ColletinName, dbOpt)
+	err := d.Dao.DBAction(DBName, {{$name}}ColletinName, dbOpt)
 	if err != nil {
 		return nil, errs.NewError(500, err.Error())
 	}
@@ -129,12 +132,12 @@ func (svc *{{.Name}}Service) FindLimit(findOpt bson.M, selectOpt bson.M, start, 
 	return &result, nil
 }
 
-func (svc *{{.Name}}Service) Delete(objectId string) (*models.{{.Name}}, error) {
+func (d *{{.Name}}Dao) Delete(objectId string) (*models.{{.Name}}, error) {
 	var object models.{{.Name}}
 	dbOpt := func(col *mgo.Collection) error {
 		return col.RemoveId(bson.ObjectIdHex(objectId))
 	}
-	err := svc.Service.DBAction(DBName, {{$name}}ColletinName, dbOpt)
+	err := d.Dao.DBAction(DBName, {{$name}}ColletinName, dbOpt)
 	if err != nil {
 		return nil, errs.NewError(500, err.Error())
 	}
@@ -143,27 +146,27 @@ func (svc *{{.Name}}Service) Delete(objectId string) (*models.{{.Name}}, error) 
 
 
 
-func (svc *{{.Name}}Service) IsExist(findOpt bson.M) (bool, error) {
+func (d *{{.Name}}Dao) IsExist(findOpt bson.M) (bool, error) {
 	var num int
 	dbOpt := func(col *mgo.Collection) error {
 		count, err := col.Find(findOpt).Count()
 		num = count
 		return err
 	}
-	err := svc.Service.DBAction(DBName, {{$name}}ColletinName, dbOpt)
+	err := d.Dao.DBAction(DBName, {{$name}}ColletinName, dbOpt)
 	if err != nil {
 		return false, err
 	}
 	return num > 0, nil
 }
 
-func (svc *{{.Name}}Service) Get(findOpt, selectOpt bson.M) (*models.{{.Name}}, error) {
+func (d *{{.Name}}Dao) Get(findOpt, selectOpt bson.M) (*models.{{.Name}}, error) {
 
 	var result models.{{.Name}}
 	dbOpt := func(col *mgo.Collection) error {
 		return col.Find(findOpt).Select(selectOpt).One(&result)
 	}
-	err := svc.Service.DBAction(DBName, {{$name}}ColletinName, dbOpt)
+	err := d.Dao.DBAction(DBName, {{$name}}ColletinName, dbOpt)
 
 	if err != nil {
 		return nil, errs.NewError(500, err.Error())
