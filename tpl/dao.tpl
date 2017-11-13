@@ -41,8 +41,13 @@ func (d *{{.Name}}Dao) BulkAdd(objects []interface{}) (interface{}, error) {
 }
 
 func (d *{{.Name}}Dao) Update(findOpt, updateOpt bson.M) error {
-	currentTime := time.Now()
-	updateOpt["updated"] = &currentTime
+	v, ok := updateOpt["$set"]
+	if ok {
+		nowTime := time.Now().Local()
+		if v1, ok1 := v.(bson.M); ok1 {
+			v1["updated"] = &nowTime
+		}
+	}
 	dbOpt := func(col *mgo.Collection) error {
 		return col.Update(findOpt, updateOpt)
 	}
@@ -57,8 +62,13 @@ func (d *{{.Name}}Dao) Update(findOpt, updateOpt bson.M) error {
 func (d *{{.Name}}Dao) ApplayUpdate(findOpt, updateOpt bson.M,upsert bool, isReturn bool) (*models.{{.Name}},*mgo.ChangeInfo, error) {
 	var newResult models.{{.Name}}
 	var changeInfo *mgo.ChangeInfo
-	currentTime := time.Now()
-	updateOpt["updated"] = &currentTime
+	v, ok := updateOpt["$set"]
+	if ok {
+		nowTime := time.Now().Local()
+		if v1, ok1 := v.(bson.M); ok1 {
+			v1["updated"] = &nowTime
+		}
+	}
 	dbOpt := func(col *mgo.Collection) error {
 		change := mgo.Change{
 			Update:    updateOpt,
