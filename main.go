@@ -4,123 +4,76 @@ import (
 	"flag"
 	"fmt"
 	"os"
-	"os/exec"
-	"path/filepath"
-	"strings"
-	"text/template"
+
+	"github.com/shipizheng/apigenerate/tpl"
 )
 
-var f1 = Field{
-	FieldName: "id",
-	FieldType: "bson.ObjectId",
-	FieldAnn:  "",
-}
+var help = `1.  service -n -d 
+2.  dao -n -d  `
 
-//字段
-type Field struct {
-	FieldName string `json:"fName"`
-	FieldType string `json:"fType"`
-	FieldAnn  string `json:"anno,omitempty"`
-	IsMust    bool   `json:"isMust"`
-}
-
-//方法
-type Method struct {
-	MethodName string  `json:"methodName"`
-	Params     []Field `json:"params,omitempty"`
-	ReturnType []Field `json:"returnType,omitempty"`
-}
-
-//模型
-type Modle struct {
-	Name        string   `json:"name"`
-	PkgName     string   `json:"pkgName"`
-	ProjectName string   `json:"ProjectName"`
-	Fileds      []Field  `json:"fields"`
-	Methods     []Method `json:"methods"`
-	Annotation  string   `json:"annotation,omitempty"`
-}
-
-// ToUpper 大写
-func ToUpper(content string) string {
-	return strings.ToTitle(content)
-}
+const (
+	ServiceCmd = "service"
+	DaoCmd     = "dao"
+)
 
 func main() {
 
-	// apigenerate -n "mc" [dir]
-
-	name := flag.String("n", "", "models名字")
-	pName := flag.String("p", "", "project/package名字")
-	outPath := flag.String("d", ".", "输出路径")
-	flag.Parse()
-	modleName := *name
-	if modleName == "" {
-		fmt.Println("models not empty")
+	if len(os.Args) < 2 {
+		fmt.Println("list or count subcommand is required")
 		os.Exit(1)
 	}
-	projectName := *pName
-	if projectName == "" {
-		fmt.Println("projectName not empty")
-		os.Exit(1)
+	cmdName := os.Args[1]
+	switch cmdName {
+	case ServiceCmd:
+		serviceCmd := flag.NewFlagSet("service", flag.ExitOnError)
+		name := serviceCmd.String("n", "", "名字")
+		outPath := serviceCmd.String("d", ".", "输出路径")
+		serviceCmd.Parse(os.Args[2:])
+		if name == nil || *name == "" {
+			fmt.Printf("请输入 <%s> 命令 生成的文件名 \n", cmdName)
+			return
+		}
+		fmt.Printf("%s starting generate %s...\n", cmdName, *name)
+		service := tpl.NewService(*name)
+		service.Conf = tpl.Conf{
+			Dev: true,
+			Out: *outPath,
+		}
+		b, err := service.CodeGenerate()
+		if err != nil {
+			// panic(err)
+			fmt.Errorf("%s", err)
+			return
+		}
+		if b {
+			fmt.Printf("生成%v成功\n", *name)
+		}
+	case DaoCmd:
+		daoCmd := flag.NewFlagSet("dao", flag.ExitOnError)
+		name := daoCmd.String("n", "", "名字")
+		outPath := daoCmd.String("d", ".", "输出路径")
+		daoCmd.Parse(os.Args[2:])
+		if name == nil || *name == "" {
+			fmt.Printf("请输入 <%s> 命令 生成的文件名 \n", cmdName)
+			return
+		}
+		fmt.Printf("%s starting generate %s...\n", cmdName, *name)
+		dao := tpl.NewDao(*name)
+		dao.Conf = tpl.Conf{
+			Dev: true,
+			Out: *outPath,
+		}
+		b, err := dao.CodeGenerate()
+		if err != nil {
+			// panic(err)
+			fmt.Errorf("%s", err)
+			return
+		}
+		if b {
+			fmt.Printf("生成%v成功\n", *name)
+		}
+	default:
+		// serviceCmd.PrintDefaults()
 	}
-	out := *outPath
-	if out == "" || out == "." {
-		out, _ = os.Getwd()
-	}
 
-	fmt.Printf("name:%s\noutpath:%s\n", modleName, out)
-	var model Modle
-	model.Name = modleName
-	model.ProjectName = projectName
-	model.PkgName = "models"
-	model.Fileds = []Field{f1}
-
-	currentPath := getCurrPath()
-	// fmt.Println("1:" + currentPath)
-	currentPath = getParentDirectory(currentPath)
-	// fmt.Println("2:" + currentPath)
-	tmplPath := filepath.Join(currentPath, "src", "github.com/shipizheng/apigenerate", "model.tpl")
-
-	funcMap := template.FuncMap{
-		"toLower": func(content string) string {
-			return strings.ToLower(content)
-		},
-		"toTitle": func(content string) string {
-			return strings.Title(content)
-		},
-	}
-
-	tmpl := template.New("model.tpl")
-	tmpl.Funcs(funcMap)
-	tmpl = template.Must(tmpl.ParseFiles(tmplPath))
-	// tmpl = tmpl.Funcs(funcMap)
-	//
-	fileNname := strings.ToLower(model.Name)
-	// tmplOut := filepath.Join(currentPath, "models", fileNname+".go")
-	tmplOut := filepath.Join(out, fileNname+".go")
-	outFile, _ := os.OpenFile(tmplOut, os.O_RDWR|os.O_CREATE, os.ModePerm)
-	defer outFile.Close()
-	tmpl.Execute(outFile, model)
-}
-
-func getCurrPath() string {
-	file, _ := exec.LookPath(os.Args[0])
-	path, _ := filepath.Abs(file)
-	index := strings.LastIndex(path, string(os.PathSeparator))
-	ret := path[:index]
-	return ret
-}
-
-func subStr(s string, pos, length int) string {
-	runes := []rune(s)
-	l := pos + length
-	if l > len(runes) {
-		l = len(runes)
-	}
-	return string(runes[pos:l])
-}
-
-func getParentDirectory(dirctory string) string {
-	return subStr(dirctory, 0, strings.LastIndex(dirctory, string(os.PathSeparator)))
 }
