@@ -14,7 +14,7 @@ func (d *{{.Name}}Dao) Add(object models.{{.Name}}) (*models.{{.Name}}, error) {
 	result, err := govalidator.ValidateStruct(&object)
 	if !result {
 		if err != nil {
-			return nil, errs.NewError(400, err.Error())
+			return nil, err
 		}
 	}
 	dbOpt := func(col *mgo.Collection) error {
@@ -23,7 +23,7 @@ func (d *{{.Name}}Dao) Add(object models.{{.Name}}) (*models.{{.Name}}, error) {
 	err = d.Dao.DBAction(DBName, {{$name}}ColletinName, dbOpt)
 
 	if err != nil {
-		return nil, errs.NewError(500, err.Error())
+		return nil, err
 	}
 	return &object, nil
 }
@@ -35,18 +35,20 @@ func (d *{{.Name}}Dao) BulkAdd(objects []interface{}) (interface{}, error) {
 	err := d.Dao.DBAction(DBName, {{$name}}ColletinName, dbOpt)
 
 	if err != nil {
-		return nil, errs.NewError(500, err.Error())
+		return nil, err
 	}
 	return objects, nil
 }
 
 func (d *{{.Name}}Dao) Update(findOpt, updateOpt bson.M) error {
 	v, ok := updateOpt["$set"]
+	nowTime := time.Now().Local()
 	if ok {
-		nowTime := time.Now().Local()
 		if v1, ok1 := v.(bson.M); ok1 {
 			v1["updated"] = &nowTime
 		}
+	}else{
+		updateOpt["$set"] = bson.M{"updated": &nowTime}
 	}
 	dbOpt := func(col *mgo.Collection) error {
 		return col.Update(findOpt, updateOpt)
@@ -54,7 +56,7 @@ func (d *{{.Name}}Dao) Update(findOpt, updateOpt bson.M) error {
 	err := d.Dao.DBAction(DBName, {{$name}}ColletinName, dbOpt)
 
 	if err != nil {
-		return errs.NewError(500, err.Error())
+		return err
 	}
 	return nil
 }
@@ -63,11 +65,13 @@ func (d *{{.Name}}Dao) ApplayUpdate(findOpt, updateOpt bson.M,upsert bool, isRet
 	var newResult models.{{.Name}}
 	var changeInfo *mgo.ChangeInfo
 	v, ok := updateOpt["$set"]
+	nowTime := time.Now().Local()
 	if ok {
-		nowTime := time.Now().Local()
 		if v1, ok1 := v.(bson.M); ok1 {
 			v1["updated"] = &nowTime
 		}
+	}else{
+		updateOpt["$set"] = bson.M{"updated": &nowTime}
 	}
 	dbOpt := func(col *mgo.Collection) error {
 		change := mgo.Change{
@@ -82,7 +86,7 @@ func (d *{{.Name}}Dao) ApplayUpdate(findOpt, updateOpt bson.M,upsert bool, isRet
 	err := d.Dao.DBAction(DBName, {{$name}}ColletinName, dbOpt)
 
 	if err != nil {
-		return nil, changeInfo,errs.NewError(500, err.Error())
+		return nil, changeInfo,err
 	}
 	return &newResult, changeInfo,nil
 }
@@ -97,7 +101,7 @@ func (d *{{.Name}}Dao) Finds(findOpt bson.M, selectOpt bson.M, ss ...string) ([]
 	}
 	err := d.Dao.DBAction(DBName, {{$name}}ColletinName, dbOpt)
 	if err != nil {
-		return nil, errs.NewError(500, err.Error())
+		return nil, err
 	}
 	return objects, nil
 }
@@ -111,7 +115,7 @@ func (d *{{.Name}}Dao) Count(findOpt bson.M) (int, error) {
 	}
 	err := d.Dao.DBAction(DBName, {{$name}}ColletinName, dbOpt)
 	if err != nil {
-		return count, errs.NewError(500, err.Error())
+		return count, err
 	}
 	return count, nil
 }
@@ -129,7 +133,7 @@ func (d *{{.Name}}Dao) FindLimit(findOpt bson.M, selectOpt bson.M, start, count 
 	}
 	err := d.Dao.DBAction(DBName, {{$name}}ColletinName, dbOpt)
 	if err != nil {
-		return nil, errs.NewError(500, err.Error())
+		return nil, err
 	}
 	if objects == nil {
 		objects = make([]models.{{.Name}}, 0)
@@ -149,7 +153,7 @@ func (d *{{.Name}}Dao) Delete(objectId string) (*models.{{.Name}}, error) {
 	}
 	err := d.Dao.DBAction(DBName, {{$name}}ColletinName, dbOpt)
 	if err != nil {
-		return nil, errs.NewError(500, err.Error())
+		return nil, err
 	}
 	return &object, nil
 }
@@ -179,7 +183,7 @@ func (d *{{.Name}}Dao) Get(findOpt, selectOpt bson.M) (*models.{{.Name}}, error)
 	err := d.Dao.DBAction(DBName, {{$name}}ColletinName, dbOpt)
 
 	if err != nil {
-		return nil, errs.NewError(500, err.Error())
+		return nil, err
 	}
 	return &result, nil
 }
