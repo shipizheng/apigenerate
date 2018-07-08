@@ -42,13 +42,12 @@ func (d *{{.Name}}Dao) BulkAdd(objects []interface{}) (interface{}, error) {
 
 func (d *{{.Name}}Dao) Update(findOpt, updateOpt bson.M) error {
 	v, ok := updateOpt["$set"]
+	if !ok {
+		return  errors.New("update must have $set")
+	}
 	nowTime := time.Now().Local()
-	if ok {
-		if v1, ok1 := v.(bson.M); ok1 {
-			v1["updated"] = &nowTime
-		}
-	}else{
-		updateOpt["$set"] = bson.M{"updated": &nowTime}
+	if v1, ok1 := v.(bson.M); ok1 {
+		v1["updated"] = &nowTime
 	}
 	dbOpt := func(col *mgo.Collection) error {
 		return col.Update(findOpt, updateOpt)
@@ -65,13 +64,12 @@ func (d *{{.Name}}Dao) ApplayUpdate(findOpt, updateOpt bson.M,upsert bool, isRet
 	var newResult models.{{.Name}}
 	var changeInfo *mgo.ChangeInfo
 	v, ok := updateOpt["$set"]
+	if !ok {
+		return nil, nil, errors.New("update must have $set")
+	}
 	nowTime := time.Now().Local()
-	if ok {
-		if v1, ok1 := v.(bson.M); ok1 {
-			v1["updated"] = &nowTime
-		}
-	}else{
-		updateOpt["$set"] = bson.M{"updated": &nowTime}
+	if v1, ok1 := v.(bson.M); ok1 {
+		v1["updated"] = &nowTime
 	}
 	dbOpt := func(col *mgo.Collection) error {
 		change := mgo.Change{
